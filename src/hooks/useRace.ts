@@ -168,18 +168,24 @@ export function useRace(): UseRaceReturn {
     setGameState('racing')
     setCountdownLabel(null)
 
-    const start = performance.now()
+    let simMs = 0
+    let lastNow = performance.now()
     const horseIds = Object.keys(plan.finishTimesMs)
+    // Cap per-frame advance so background tab throttling cannot skip the race.
+    const MAX_FRAME_MS = 48
 
     const tick = (now: number) => {
-      const elapsed = now - start
+      const dt = Math.min(Math.max(0, now - lastNow), MAX_FRAME_MS)
+      lastNow = now
+      simMs += dt
+
       const next: RaceProgress = {}
       for (const id of horseIds) {
-        next[id] = getHorseProgress(elapsed, id, plan)
+        next[id] = getHorseProgress(simMs, id, plan)
       }
       setRaceProgress(next)
 
-      if (elapsed < plan.durationMs) {
+      if (simMs < plan.durationMs) {
         animationRef.current = requestAnimationFrame(tick)
       } else {
         // Snap to exact finish positions in predetermined order
