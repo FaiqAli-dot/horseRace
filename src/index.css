@@ -1,0 +1,68 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-display: 'Syne', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #07080c;
+  --color-cream: #f5f2eb;
+  --color-muted: #9a958a;
+  --color-surface: #14161c;
+  --color-surface-2: #1c1f28;
+  --color-track: #12141a;
+  --color-gold: #d4a017;
+  --color-gold-light: #f0c14b;
+  --color-gold-dim: #8a6d1b;
+}
+
+@layer base {
+  html {
+    @apply bg-ink text-cream antialiased;
+  }
+
+  body {
+    @apply m-0 min-h-dvh font-sans;
+    background:
+      radial-gradient(ellipse 90% 55% at 50% -10%, rgba(212, 160, 23, 0.14), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 100% 20%, rgba(60, 80, 120, 0.12), transparent 50%),
+      radial-gradient(ellipse 50% 35% at 0% 60%, rgba(120, 70, 30, 0.1), transparent 45%),
+      #07080c;
+  }
+
+  #root {
+    @apply min-h-dvh;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .app-shell {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-position: center top;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(212, 160, 23, 0.35) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
