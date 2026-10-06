@@ -8,8 +8,7 @@ import {
   placeBadgeTone,
   podiumRing,
 } from '../game/livePlaces'
-import type { RaceResult } from '../game/raceTypes'
-import type { CountdownLabel, RaceProgress } from '../hooks/useRace'
+import type { CountdownLabel, RaceProgress, RaceResult } from '../game/raceTypes'
 import { Confetti } from './Confetti'
 import { HorseSilhouette } from './Horse'
 

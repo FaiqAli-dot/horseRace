@@ -1,6 +1,6 @@
 import type { Horse } from '../game/raceTypes'
 
-/** Five runners for pari-mutuel MVP — dividends come from backend pools. */
+/** Five runners — dividends come from backend pools only. */
 export const HORSES: Horse[] = [
   {
     id: 'thunder',
@@ -8,7 +8,6 @@ export const HORSES: Horse[] = [
     number: 1,
     color: '#3b82f6',
     accent: '#93c5fd',
-    multipliers: { first: 0, second: 0, third: 0 },
   },
   {
     id: 'shadow',
@@ -16,7 +15,6 @@ export const HORSES: Horse[] = [
     number: 2,
     color: '#64748b',
     accent: '#cbd5e1',
-    multipliers: { first: 0, second: 0, third: 0 },
   },
   {
     id: 'rocket',
@@ -24,7 +22,6 @@ export const HORSES: Horse[] = [
     number: 3,
     color: '#dc2626',
     accent: '#fca5a5',
-    multipliers: { first: 0, second: 0, third: 0 },
   },
   {
     id: 'blaze',
@@ -32,7 +29,6 @@ export const HORSES: Horse[] = [
     number: 4,
     color: '#ea580c',
     accent: '#fdba74',
-    multipliers: { first: 0, second: 0, third: 0 },
   },
   {
     id: 'comet',
@@ -40,7 +36,6 @@ export const HORSES: Horse[] = [
     number: 5,
     color: '#7c3aed',
     accent: '#c4b5fd',
-    multipliers: { first: 0, second: 0, third: 0 },
   },
 ]
 
