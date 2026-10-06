@@ -17,8 +17,9 @@ export default function App() {
     race.showFinishMoment && race.gameState !== 'finished' && !race.showPhotoFinishOverlay
   const trackRef = useRef<HTMLDivElement>(null)
 
+  // Only scroll on countdown so smooth-scroll doesn't stall the race rAF on mobile.
   useEffect(() => {
-    if (race.gameState === 'countdown' || race.gameState === 'racing') {
+    if (race.gameState === 'countdown') {
       trackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
   }, [race.gameState])
@@ -32,6 +33,7 @@ export default function App() {
           <div ref={trackRef}>
             <RaceTrack
               progress={race.raceProgress}
+              progressRef={race.progressRef}
               selectedHorseId={race.selectedHorseId}
               isRacing={isRacing}
               countdownLabel={race.countdownLabel}

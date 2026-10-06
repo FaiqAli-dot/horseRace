@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type MutableRefObject,
+} from 'react'
 import { getHorseById } from '../data/horses'
 import {
   getHorseProgress,
@@ -20,6 +26,13 @@ const STARTING_BALANCE = 1000
 const COUNTDOWN_STEPS = ['READY', '3', '2', '1', 'GO!'] as const
 /** Hold on the finish line with confetti / podium before the result modal. */
 const FINISH_MOMENT_MS = 2000
+/** React place/progress publish rate — keeps mobile paints light. */
+const PROGRESS_PUBLISH_MS = 50
+/**
+ * If the tab was backgrounded longer than this, don't skip the race —
+ * freeze elapsed and continue smoothly when visible again.
+ */
+const BACKGROUND_GAP_MS = 250
 
 export type CountdownLabel = (typeof COUNTDOWN_STEPS)[number] | null
 export type FinishIntensity = 'win' | 'podium' | 'loss'
@@ -36,7 +49,10 @@ export interface UseRaceReturn {
   customBet: string
   countdownLabel: CountdownLabel
   raceProgress: RaceProgress
+  /** Imperative progress mirror — RaceTrack reads this every frame for transforms. */
+  progressRef: MutableRefObject<RaceProgress>
   result: RaceResult | null
+  animationPlan: RaceAnimationPlan | null
   payout: PayoutBreakdown | null
   history: HistoryEntry[]
   photoFinish: boolean
@@ -71,6 +87,9 @@ export function useRace(): UseRaceReturn {
   const [countdownLabel, setCountdownLabel] = useState<CountdownLabel>(null)
   const [raceProgress, setRaceProgress] = useState<RaceProgress>({})
   const [result, setResult] = useState<RaceResult | null>(null)
+  const [animationPlan, setAnimationPlan] = useState<RaceAnimationPlan | null>(
+    null,
+  )
   const [payout, setPayout] = useState<PayoutBreakdown | null>(null)
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [photoFinish, setPhotoFinish] = useState(false)
@@ -83,12 +102,18 @@ export function useRace(): UseRaceReturn {
   const [lockedBet, setLockedBet] = useState<BetSlip | null>(null)
 
   const animationRef = useRef<number | null>(null)
+  const intervalRef = useRef<number | null>(null)
   const finishTimerRef = useRef<number | null>(null)
   const planRef = useRef<RaceAnimationPlan | null>(null)
   const resultRef = useRef<RaceResult | null>(null)
   const lockedBetRef = useRef<BetSlip | null>(null)
   const selectedPlaceRef = useRef<FinishPlace | null>(null)
   const payoutRef = useRef<PayoutBreakdown | null>(null)
+  const progressRef = useRef<RaceProgress>({})
+  const raceDoneRef = useRef(false)
+  const elapsedRef = useRef(0)
+  const lastTickRef = useRef(0)
+  const lastPublishRef = useRef(0)
 
   const isInteractionLocked =
     gameState === 'countdown' ||
@@ -103,6 +128,17 @@ export function useRace(): UseRaceReturn {
     Number.isFinite(effectiveBet) &&
     effectiveBet >= 0.1 &&
     effectiveBet <= balance
+
+  const stopRaceLoop = useCallback(() => {
+    if (animationRef.current !== null) {
+      cancelAnimationFrame(animationRef.current)
+      animationRef.current = null
+    }
+    if (intervalRef.current !== null) {
+      window.clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+  }, [])
 
   const selectHorse = useCallback(
     (horseId: string) => {
@@ -125,7 +161,6 @@ export function useRace(): UseRaceReturn {
   const setCustomBet = useCallback(
     (value: string) => {
       if (isInteractionLocked) return
-      // Allow digits and one decimal point while typing
       if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
         setCustomBetState(value)
       }
@@ -144,7 +179,6 @@ export function useRace(): UseRaceReturn {
       place <= 3 &&
       Boolean(breakdown?.isWin)
 
-    // Keep podium highlights under the result overlay; clear on race again.
     if (shouldPhoto) {
       setShowPhotoFinishOverlay(true)
       window.setTimeout(() => {
@@ -157,6 +191,10 @@ export function useRace(): UseRaceReturn {
   }, [])
 
   const settleAndCelebrate = useCallback(() => {
+    if (raceDoneRef.current) return
+    raceDoneRef.current = true
+    stopRaceLoop()
+
     const raceResult = resultRef.current
     const bet = lockedBetRef.current
     const plan = planRef.current
@@ -168,11 +206,11 @@ export function useRace(): UseRaceReturn {
     const place = getPlaceForHorse(raceResult, bet.horseId)
     const breakdown = calculatePayout(horse, place, bet.amount)
 
-    // Slight visual stagger past the wire so podium order is obvious
     const snapped: RaceProgress = {}
     raceResult.positions.forEach((id, index) => {
       snapped[id] = 1 - index * 0.018
     })
+    progressRef.current = snapped
     setRaceProgress(snapped)
 
     setSelectedPlace(place)
@@ -206,43 +244,82 @@ export function useRace(): UseRaceReturn {
     finishTimerRef.current = window.setTimeout(() => {
       revealResult()
     }, FINISH_MOMENT_MS)
-  }, [revealResult])
+  }, [revealResult, stopRaceLoop])
 
   const startRacing = useCallback(() => {
     const plan = planRef.current
     if (!plan) return
+
+    stopRaceLoop()
+    raceDoneRef.current = false
+    elapsedRef.current = 0
+    lastTickRef.current = performance.now()
+    lastPublishRef.current = 0
 
     setGameState('racing')
     setCountdownLabel(null)
     setShowFinishMoment(false)
     setFinishIntensity(null)
 
-    let simMs = 0
-    let lastNow = performance.now()
     const horseIds = Object.keys(plan.finishTimesMs)
-    // Cap per-frame advance so background tab throttling cannot skip the race.
-    const MAX_FRAME_MS = 48
+    const initial: RaceProgress = {}
+    for (const id of horseIds) initial[id] = 0
+    progressRef.current = initial
+    setRaceProgress(initial)
 
-    const tick = (now: number) => {
-      const dt = Math.min(Math.max(0, now - lastNow), MAX_FRAME_MS)
-      lastNow = now
-      simMs += dt
+    const publish = (next: RaceProgress, force = false) => {
+      const now = performance.now()
+      if (!force && now - lastPublishRef.current < PROGRESS_PUBLISH_MS) return
+      lastPublishRef.current = now
+      setRaceProgress({ ...next })
+    }
+
+    const step = () => {
+      if (raceDoneRef.current) return
+
+      const now = performance.now()
+      let dt = now - lastTickRef.current
+      lastTickRef.current = now
+
+      // Background / Safari throttle gap: don't teleport to the finish.
+      if (dt > BACKGROUND_GAP_MS) {
+        dt = 1000 / 60
+      }
+      dt = Math.max(0, Math.min(dt, 50))
+
+      elapsedRef.current = Math.min(
+        elapsedRef.current + dt,
+        plan.durationMs,
+      )
+      const elapsed = elapsedRef.current
 
       const next: RaceProgress = {}
       for (const id of horseIds) {
-        next[id] = getHorseProgress(simMs, id, plan)
+        next[id] = getHorseProgress(elapsed, id, plan)
       }
-      setRaceProgress(next)
+      progressRef.current = next
+      publish(next, elapsed >= plan.durationMs)
 
-      if (simMs < plan.durationMs) {
-        animationRef.current = requestAnimationFrame(tick)
-      } else {
+      if (elapsed >= plan.durationMs) {
         settleAndCelebrate()
       }
     }
 
-    animationRef.current = requestAnimationFrame(tick)
-  }, [settleAndCelebrate])
+    // rAF for smooth displays; interval only kicks in if rAF stalls (iOS Safari).
+    const rafLoop = () => {
+      step()
+      if (!raceDoneRef.current) {
+        animationRef.current = requestAnimationFrame(rafLoop)
+      }
+    }
+    animationRef.current = requestAnimationFrame(rafLoop)
+    intervalRef.current = window.setInterval(() => {
+      if (raceDoneRef.current) return
+      if (performance.now() - lastTickRef.current > 80) {
+        step()
+      }
+    }, 50)
+  }, [settleAndCelebrate, stopRaceLoop])
 
   const placeBet = useCallback(() => {
     if (!canPlaceBet || !selectedHorseId) return
@@ -257,6 +334,7 @@ export function useRace(): UseRaceReturn {
     resultRef.current = raceResult
     planRef.current = animation
     setResult(raceResult)
+    setAnimationPlan(animation)
     setPhotoFinish(animation.photoFinish)
     setPayout(null)
     setSelectedPlace(null)
@@ -265,16 +343,18 @@ export function useRace(): UseRaceReturn {
     setShowPhotoFinishOverlay(false)
     setShowFinishMoment(false)
     setFinishIntensity(null)
+    raceDoneRef.current = false
     if (finishTimerRef.current) {
       window.clearTimeout(finishTimerRef.current)
       finishTimerRef.current = null
     }
+    stopRaceLoop()
 
-    // Reset horses to gate
     const initial: RaceProgress = {}
     for (const id of Object.keys(animation.finishTimesMs)) {
       initial[id] = 0
     }
+    progressRef.current = initial
     setRaceProgress(initial)
 
     setGameState('countdown')
@@ -292,14 +372,11 @@ export function useRace(): UseRaceReturn {
     }
 
     window.setTimeout(advance, 800)
-  }, [canPlaceBet, selectedHorseId, effectiveBet, startRacing])
+  }, [canPlaceBet, selectedHorseId, effectiveBet, startRacing, stopRaceLoop])
 
   const raceAgain = useCallback(() => {
     if (gameState !== 'finished') return
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current)
-      animationRef.current = null
-    }
+    stopRaceLoop()
     if (finishTimerRef.current) {
       window.clearTimeout(finishTimerRef.current)
       finishTimerRef.current = null
@@ -309,8 +386,11 @@ export function useRace(): UseRaceReturn {
     lockedBetRef.current = null
     selectedPlaceRef.current = null
     payoutRef.current = null
+    progressRef.current = {}
+    raceDoneRef.current = false
     setLockedBet(null)
     setResult(null)
+    setAnimationPlan(null)
     setPayout(null)
     setSelectedPlace(null)
     setCountdownLabel(null)
@@ -320,14 +400,14 @@ export function useRace(): UseRaceReturn {
     setFinishIntensity(null)
     setRaceProgress({})
     setGameState('betting')
-  }, [gameState])
+  }, [gameState, stopRaceLoop])
 
   useEffect(() => {
     return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current)
+      stopRaceLoop()
       if (finishTimerRef.current) window.clearTimeout(finishTimerRef.current)
     }
-  }, [])
+  }, [stopRaceLoop])
 
   return {
     gameState,
@@ -337,7 +417,9 @@ export function useRace(): UseRaceReturn {
     customBet,
     countdownLabel,
     raceProgress,
+    progressRef,
     result,
+    animationPlan,
     payout,
     history,
     photoFinish,

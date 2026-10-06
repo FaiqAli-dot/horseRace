@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, type MutableRefObject } from 'react'
 import { HORSES } from '../data/horses'
 import {
   getFinalPlaces,
@@ -13,21 +13,25 @@ import type { CountdownLabel, RaceProgress } from '../hooks/useRace'
 import { Confetti } from './Confetti'
 import { HorseSilhouette } from './Horse'
 
+/** Track travel as fraction of lane width (gate → finish). */
+const TRAVEL = 0.82
+const GATE = 0.04
+
 interface RaceTrackProps {
   progress: RaceProgress
+  progressRef: MutableRefObject<RaceProgress>
   selectedHorseId: string | null
   isRacing: boolean
   countdownLabel: CountdownLabel
   result: RaceResult | null
   showFinishMoment: boolean
-  /** Burst confetti during the finish hold (not under the result modal). */
   confettiActive: boolean
-  /** Player win intensity for confetti — null until settled. */
   finishIntensity: 'win' | 'podium' | 'loss' | null
 }
 
 export function RaceTrack({
   progress,
+  progressRef,
   selectedHorseId,
   isRacing,
   countdownLabel,
@@ -36,6 +40,9 @@ export function RaceTrack({
   confettiActive,
   finishIntensity,
 }: RaceTrackProps) {
+  const laneRef = useRef<HTMLDivElement>(null)
+  const mountRefs = useRef<Record<string, HTMLDivElement | null>>({})
+
   const livePlaces = useMemo(() => {
     if (showFinishMoment && result) return getFinalPlaces(result.positions)
     if (isRacing || Object.keys(progress).length > 0) return getLivePlaces(progress)
@@ -43,6 +50,43 @@ export function RaceTrack({
   }, [progress, isRacing, showFinishMoment, result])
 
   const showPlaces = isRacing || showFinishMoment
+
+  // Imperative transform updates — avoids relying on React paint cadence on mobile.
+  useEffect(() => {
+    let raf = 0
+    const trackWidth = () => laneRef.current?.clientWidth ?? 0
+
+    const apply = () => {
+      const w = trackWidth()
+      if (w > 0) {
+        const source = progressRef.current
+        for (const horse of HORSES) {
+          const el = mountRefs.current[horse.id]
+          if (!el) continue
+          const p = source[horse.id] ?? 0
+          const x = (GATE + p * TRAVEL) * w
+          el.style.transform = `translate3d(${x}px, -50%, 0)`
+        }
+      }
+      raf = requestAnimationFrame(apply)
+    }
+
+    raf = requestAnimationFrame(apply)
+    return () => cancelAnimationFrame(raf)
+  }, [progressRef])
+
+  // Snap positions when React progress jumps (finish stagger / reset).
+  useEffect(() => {
+    const w = laneRef.current?.clientWidth ?? 0
+    if (w <= 0) return
+    for (const horse of HORSES) {
+      const el = mountRefs.current[horse.id]
+      if (!el) continue
+      const p = progress[horse.id] ?? 0
+      const x = (GATE + p * TRAVEL) * w
+      el.style.transform = `translate3d(${x}px, -50%, 0)`
+    }
+  }, [progress, showFinishMoment])
 
   return (
     <section className="relative mx-4 overflow-hidden rounded-3xl border border-white/8 bg-track shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:mx-6">
@@ -62,7 +106,10 @@ export function RaceTrack({
       </div>
 
       <div className="relative px-2 pb-3 pt-1 sm:px-3">
-        <div className="relative h-[240px] overflow-hidden rounded-2xl border border-white/5 bg-[#1a1510] sm:h-[280px] md:h-[320px]">
+        <div
+          ref={laneRef}
+          className="relative h-[240px] overflow-hidden rounded-2xl border border-white/5 bg-[#1a1510] sm:h-[280px] md:h-[320px]"
+        >
           <div className="absolute inset-0 bg-[linear-gradient(180deg,#2a2218_0%,#1f1812_40%,#17120e_100%)]" />
           <div
             className="absolute inset-0 opacity-30"
@@ -100,8 +147,6 @@ export function RaceTrack({
 
           <div className="absolute inset-0 py-3">
             {HORSES.map((horse, lane) => {
-              const p = progress[horse.id] ?? 0
-              const leftPct = 4 + p * 82
               const selected = selectedHorseId === horse.id
               const place = livePlaces[horse.id]
               const finishPlace =
@@ -119,10 +164,13 @@ export function RaceTrack({
                 >
                   <div className="relative h-full">
                     <div
-                      className="absolute top-1/2 -translate-y-1/2 transition-[left] duration-75 ease-linear"
-                      style={{ left: `${leftPct}%` }}
+                      ref={(node) => {
+                        mountRefs.current[horse.id] = node
+                      }}
+                      className="horse-mount absolute top-1/2 left-0 will-change-transform"
+                      style={{ transform: 'translate3d(0, -50%, 0)' }}
                     >
-                      <motion.div
+                      <div
                         className={`relative flex items-end ${
                           selected && !showFinishMoment
                             ? 'drop-shadow-[0_0_12px_rgba(212,160,23,0.55)]'
@@ -130,12 +178,6 @@ export function RaceTrack({
                         } ${showFinishMoment && finishPlace ? podiumRing(finishPlace) : ''} ${
                           showFinishMoment && finishPlace && finishPlace > 3 ? 'scale-95' : ''
                         } ${showFinishMoment && isPodium ? 'z-10 scale-110' : ''}`}
-                        animate={
-                          showFinishMoment && isPodium
-                            ? { scale: [1.05, 1.14, 1.08] }
-                            : { scale: 1 }
-                        }
-                        transition={{ duration: 0.55 }}
                       >
                         {showPlaces && place && (
                           <span
@@ -163,7 +205,7 @@ export function RaceTrack({
                             {horse.name}
                           </span>
                         )}
-                      </motion.div>
+                      </div>
                     </div>
                   </div>
                 </div>

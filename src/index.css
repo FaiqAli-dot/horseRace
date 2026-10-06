@@ -148,14 +148,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-
+  /* Keep race travel (transform updates) intact — only soften decorative loops. */
   .horse-gallop .horse-rig,
   .horse-gallop .leg-back-far,
   .horse-gallop .leg-back-near,

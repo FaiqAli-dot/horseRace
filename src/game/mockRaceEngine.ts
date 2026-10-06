@@ -105,8 +105,9 @@ export function getHorseProgress(
   const seed = plan.seeds[horseId] ?? 0
   const t = Math.min(1, Math.max(0, elapsedMs / finishAt))
 
-  // Ease-in acceleration then settle into a stretch drive.
-  const eased = t * t * (3 - 2 * t)
+  // Blend linear + smoothstep so horses leave the gate visibly (not stuck at 0).
+  const smooth = t * t * (3 - 2 * t)
+  const eased = t * 0.4 + smooth * 0.6
 
   // Mid-race variation fades near the finish so order stays correct.
   const envelope = Math.sin(Math.PI * Math.min(t, 0.92))
