@@ -201,6 +201,7 @@ export function RaceTrack({
             {showFinishMoment && (
               <motion.div
                 key="finish-banner"
+                data-testid="finish-banner"
                 initial={{ opacity: 0, y: 12, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, scale: 1.05 }}
