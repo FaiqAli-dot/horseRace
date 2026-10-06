@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { BetSelector } from './components/BetSelector'
 import { Header } from './components/Header'
 import { HorseSelector } from './components/HorseSelector'
@@ -12,6 +13,13 @@ export default function App() {
   const race = useRace()
   const isRacing = race.gameState === 'racing'
   const showResult = race.gameState === 'finished' && race.payout !== null
+  const trackRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (race.gameState === 'countdown' || race.gameState === 'racing') {
+      trackRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [race.gameState])
 
   return (
     <div className="app-shell min-h-dvh text-cream">
@@ -19,12 +27,14 @@ export default function App() {
         <Header balance={race.balance} />
 
         <main className="flex flex-1 flex-col gap-4 pb-44 pt-2 sm:gap-5 sm:pb-40">
-          <RaceTrack
-            progress={race.raceProgress}
-            selectedHorseId={race.selectedHorseId}
-            isRacing={isRacing}
-            countdownLabel={race.countdownLabel}
-          />
+          <div ref={trackRef}>
+            <RaceTrack
+              progress={race.raceProgress}
+              selectedHorseId={race.selectedHorseId}
+              isRacing={isRacing}
+              countdownLabel={race.countdownLabel}
+            />
+          </div>
 
           <RaceCountdown label={race.countdownLabel} />
 
