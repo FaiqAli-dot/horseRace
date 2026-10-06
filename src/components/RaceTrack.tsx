@@ -160,7 +160,7 @@ export function RaceTrack({
                 <div
                   key={horse.id}
                   className="absolute left-0 right-0"
-                  style={{ top: `${8 + lane * 15}%`, height: '14%' }}
+                  style={{ top: `${6 + lane * 18}%`, height: '16%' }}
                 >
                   <div className="relative h-full">
                     <div

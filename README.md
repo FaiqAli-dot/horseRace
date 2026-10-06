@@ -1,53 +1,79 @@
-# Horse Race — Demo Betting Game
+# Horse Race — Pari-mutuel Demo
 
-Mobile-first frontend MVP of a virtual horse racing betting game. Entirely offline: mock RNG, local balance, no backend, no real money.
+Continuous pool-betting horse racing MVP. **No real money.**
 
-## Stack
+- **Frontend:** React + TypeScript + Vite + Tailwind (visualizes backend race results)
+- **Backend:** Go authoritative engine (pools, RNG, settlement, SQLite, REST + WebSocket)
 
-- React + TypeScript + Vite
-- Tailwind CSS v4
-- Framer Motion (countdown, result, photo-finish flourishes)
+## Horses
 
-## Run locally
+Thunder, Shadow, Rocket, Blaze, Comet (5 runners). Markets: `WIN`, `PLACE_2`, `PLACE_3`. House takeout default **4%**.
+
+## Start backend
+
+```bash
+# from repo root
+go run ./cmd/server
+# listens on 0.0.0.0:8080
+```
+
+Env (optional):
+
+| Variable | Default | Notes |
+|----------|---------|--------|
+| `BACKEND_PORT` | `8080` | |
+| `BIND_ADDR` | `0.0.0.0` | |
+| `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | comma-separated |
+| `TAKEOUT_RATE` | `0.04` | |
+| `MOCK_RNG` | `true` | |
+| `MOCK_RGS` | `true` | |
+| `MOCK_BETTORS` | `true` | simulated pool activity |
+| `DB_PATH` | `data/horse_race.db` | SQLite |
+| `BETTING_WINDOW` | `12s` | |
+| `RACE_WINDOW` | `7s` | |
+| `RESULT_WINDOW` | `3s` | |
+| `RNG_SEED` | `0` | non-zero = deterministic MockRNG |
+
+```bash
+go test ./...
+go build -o bin/server ./cmd/server
+```
+
+## Start frontend
 
 ```bash
 npm install
 npm run dev
-```
-
-Open the URL Vite prints (usually `http://localhost:5173`).
-
-To expose the dev server on your LAN / Tailscale interface:
-
-```bash
+# Vite proxies /api and /ws to :8080
+# LAN:
 npm run dev -- --host 0.0.0.0
 ```
 
-Production build:
+Optional: `VITE_API_BASE=http://127.0.0.1:8080` if not using the proxy.
 
-```bash
-npm run build
-npm run preview
+## Architecture
+
+```
+Game Engine
+  ├── RNG interface → MockRNG (swap for RealRNG later)
+  ├── RGS interface → MockRGS (swap for real wallet/RGS later)
+  ├── Pool manager (pari-mutuel, cents)
+  ├── Settlement (idempotent; zero-winning-pool → refund market)
+  ├── Scheduler (betting → lock+RNG → race → settle → next)
+  └── SQLite persistence + audit log
 ```
 
-## How to play
+Backend locks bets, **then** asks RNG for the finishing order, persists it, then the frontend only animates that result.
 
-1. Select one of six horses (Thunder, Rocket, Shadow, Blaze, Storm, Comet).
-2. Choose a bet amount (quick picks or custom).
-3. Tap **PLACE BET** — balance deducts immediately.
-4. Watch countdown → race (~5–8s). Finish order is decided **before** the animation by `src/game/mockRaceEngine.ts`.
-5. Collect simulated payout if your horse finishes 1st / 2nd / 3rd, then **RACE AGAIN**.
+## API (REST)
 
-Labelled **DEMO MODE · VIRTUAL BALANCE** throughout. Starting balance: **$1,000.00**.
+- `GET /api/health`
+- `GET /api/races` · `/api/races/current` · `/api/races/upcoming` · `/api/races/:id`
+- `GET /api/races/:id/pools` · `/api/races/:id/results`
+- `POST /api/bets` · `GET /api/bets` · `GET /api/player/bets`
+- `GET /api/balance` · `POST /api/demo/reset`
+- WebSocket: `GET /api/ws` (events: `race.*`, `pool.updated`, `bet.accepted`, `bet.settled`, …)
 
-## Architecture notes
+## Demo note
 
-| Path | Role |
-|------|------|
-| `src/game/mockRaceEngine.ts` | Predetermines race result + animation plan |
-| `src/game/payout.ts` | Place × multiplier × bet |
-| `src/game/raceTypes.ts` | Shared contracts (swap engine for API later) |
-| `src/data/horses.ts` | Six horses + multipliers |
-| `src/hooks/useRace.ts` | Game state machine & session history |
-
-UI components never invent race outcomes — they only render engine output.
+Virtual balance starts at **$1,000**. Labelled demo / pari-mutuel throughout.

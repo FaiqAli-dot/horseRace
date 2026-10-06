@@ -1,12 +1,21 @@
+import type { Market } from '../api/types'
+
 const QUICK_BETS = [0.1, 0.5, 1, 5, 10]
+const MARKETS: { id: Market; label: string }[] = [
+  { id: 'WIN', label: 'Win (1st)' },
+  { id: 'PLACE_2', label: '2nd' },
+  { id: 'PLACE_3', label: '3rd' },
+]
 
 interface BetSelectorProps {
   betAmount: number
   customBet: string
+  market: Market
   disabled: boolean
   canPlaceBet: boolean
   onQuickSelect: (amount: number) => void
   onCustomChange: (value: string) => void
+  onMarketChange: (m: Market) => void
   onPlaceBet: () => void
 }
 
@@ -17,10 +26,12 @@ function formatQuick(amount: number): string {
 export function BetSelector({
   betAmount,
   customBet,
+  market,
   disabled,
   canPlaceBet,
   onQuickSelect,
   onCustomChange,
+  onMarketChange,
   onPlaceBet,
 }: BetSelectorProps) {
   const activeQuick =
@@ -31,11 +42,29 @@ export function BetSelector({
       <div className="rounded-3xl border border-white/8 bg-surface/90 p-3 shadow-[0_12px_40px_rgba(0,0,0,0.35)] sm:p-4">
         <div className="mb-2 flex items-center justify-between gap-2 sm:mb-3">
           <h2 className="font-display text-base font-semibold tracking-wide text-cream sm:text-lg">
-            Bet Amount
+            Place Pool Bet
           </h2>
           <span className="rounded-full border border-gold/30 bg-gold/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-gold sm:px-2.5 sm:py-1">
-            Demo Mode · Virtual Balance
+            Demo · Pari-mutuel · 4% takeout
           </span>
+        </div>
+
+        <div className="mb-2 flex gap-1.5">
+          {MARKETS.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              disabled={disabled}
+              onClick={() => onMarketChange(m.id)}
+              className={`min-h-10 flex-1 rounded-xl border px-2 text-xs font-semibold sm:text-sm ${
+                market === m.id
+                  ? 'border-gold bg-gold text-ink'
+                  : 'border-white/10 bg-surface-2 text-cream'
+              } ${disabled ? 'opacity-55' : ''}`}
+            >
+              {m.label}
+            </button>
+          ))}
         </div>
 
         <div className="mb-2 flex flex-wrap gap-1.5 sm:mb-3 sm:gap-2">

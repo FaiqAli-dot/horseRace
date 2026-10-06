@@ -1,16 +1,21 @@
 import { motion } from 'framer-motion'
 import { HORSES } from '../data/horses'
+import type { Market } from '../api/types'
 import { HorseSilhouette } from './Horse'
 
 interface HorseSelectorProps {
   selectedHorseId: string | null
   disabled: boolean
+  market: Market
+  dividendFor: (horseId: string, market?: Market) => number
   onSelect: (horseId: string) => void
 }
 
 export function HorseSelector({
   selectedHorseId,
   disabled,
+  market,
+  dividendFor,
   onSelect,
 }: HorseSelectorProps) {
   return (
@@ -20,13 +25,14 @@ export function HorseSelector({
           Select Your Horse
         </h2>
         <p className="text-[10px] uppercase tracking-[0.16em] text-muted">
-          Tap to lock in
+          Pool est. · {market.replace('_', ' ')}
         </p>
       </div>
 
-      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-thin sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 lg:grid-cols-6">
+      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-thin sm:mx-0 sm:grid sm:grid-cols-5 sm:overflow-visible sm:px-0">
         {HORSES.map((horse) => {
           const selected = selectedHorseId === horse.id
+          const div = dividendFor(horse.id, market)
           return (
             <motion.button
               key={horse.id}
@@ -62,21 +68,11 @@ export function HorseSelector({
                 </div>
               </div>
               <HorseSilhouette color={horse.color} className="mb-2 h-10 w-full" />
-              <div className="space-y-1 text-[11px] tabular-nums">
-                <div className="flex justify-between text-cream/90">
-                  <span className="text-muted">1st</span>
-                  <span className="font-semibold text-gold-light">
-                    {horse.multipliers.first.toFixed(2)}x
-                  </span>
-                </div>
-                <div className="flex justify-between text-cream/80">
-                  <span className="text-muted">2nd</span>
-                  <span className="font-medium">{horse.multipliers.second.toFixed(2)}x</span>
-                </div>
-                <div className="flex justify-between text-cream/70">
-                  <span className="text-muted">3rd</span>
-                  <span className="font-medium">{horse.multipliers.third.toFixed(2)}x</span>
-                </div>
+              <div className="flex items-baseline justify-between text-[11px]">
+                <span className="text-muted">Est. return</span>
+                <span className="font-semibold tabular-nums text-gold-light">
+                  {div > 0 ? `${div.toFixed(2)}x` : '—'}
+                </span>
               </div>
             </motion.button>
           )
