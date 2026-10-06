@@ -77,7 +77,12 @@ export default function App() {
 
   const history = g.bets.slice(0, 8).map((b) => {
     const horse = getHorseById(b.horseId)
-    const placeNum = (g.race?.result?.positions.indexOf(b.horseId) ?? -1) + 1
+    const result =
+      g.resultsByRaceId[b.raceId] ??
+      (g.race?.id === b.raceId ? g.race.result : null) ??
+      null
+    const idx = result?.positions.indexOf(b.horseId) ?? -1
+    const placeNum = idx >= 0 ? idx + 1 : 0
     return {
       id: b.id,
       raceId: b.raceId,

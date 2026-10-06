@@ -36,8 +36,17 @@ export function useBackendGame() {
   const [showFinishMoment, setShowFinishMoment] = useState(false)
   const [finishIntensity, setFinishIntensity] = useState<FinishIntensity | null>(null)
   const [visualResult, setVisualResult] = useState<RaceResultDTO | null>(null)
+  const [resultsByRaceId, setResultsByRaceId] = useState<Record<string, RaceResultDTO>>({})
   const animRaceIdRef = useRef<string | null>(null)
   const animDoneRef = useRef(false)
+  const resultsCacheRef = useRef<Record<string, RaceResultDTO>>({})
+
+  const rememberResult = useCallback((result: RaceResultDTO | null | undefined) => {
+    if (!result?.raceId || !result.positions?.length) return
+    if (resultsCacheRef.current[result.raceId]) return
+    resultsCacheRef.current = { ...resultsCacheRef.current, [result.raceId]: result }
+    setResultsByRaceId(resultsCacheRef.current)
+  }, [])
 
   const refresh = useCallback(async () => {
     try {
@@ -52,13 +61,34 @@ export function useBackendGame() {
       setUpcoming(up.races)
       setBalance(bal.balance)
       setBets(pb.bets)
+      rememberResult(cur.race.result)
+      const missing = [
+        ...new Set(
+          pb.bets
+            .map((b) => b.raceId)
+            .filter((id) => id && !resultsCacheRef.current[id] && id !== cur.race?.id),
+        ),
+      ]
+      if (cur.race?.id && cur.race.result && !resultsCacheRef.current[cur.race.id]) {
+        rememberResult(cur.race.result)
+      }
+      await Promise.all(
+        missing.slice(0, 8).map(async (id) => {
+          try {
+            const detail = await api.race(id)
+            rememberResult(detail.race.result)
+          } catch {
+            /* race may still be open */
+          }
+        }),
+      )
       setBackendOk(true)
       setError(null)
     } catch (e) {
       setBackendOk(false)
       setError(e instanceof Error ? e.message : 'Backend unreachable')
     }
-  }, [])
+  }, [rememberResult])
 
   // Initial load + polling fallback
   useEffect(() => {
@@ -117,6 +147,7 @@ export function useBackendGame() {
   useEffect(() => {
     if (!race) return
     const result = race.result
+    rememberResult(result)
     if (race.status === 'RACING' && result && animRaceIdRef.current !== race.id) {
       animRaceIdRef.current = race.id
       animDoneRef.current = false
@@ -167,7 +198,7 @@ export function useBackendGame() {
       progressRef.current = zero
       setRaceProgress(zero)
     }
-  }, [race, bets])
+  }, [race, bets, rememberResult])
 
   const effectiveBet = useMemo(() => {
     if (customBet.trim() !== '') {
@@ -245,6 +276,7 @@ export function useBackendGame() {
     showFinishMoment,
     finishIntensity,
     visualResult,
+    resultsByRaceId,
     bettingOpen,
     dividendFor,
     refresh,
