@@ -1,8 +1,9 @@
 import { motion } from 'framer-motion'
-import { formatMoney } from '../game/payout'
+import { formatMoney } from '../services/money'
 
 interface HeaderProps {
   balance: number
+  onReset?: () => void
 }
 
 function AnimatedBalance({ balance }: { balance: number }) {
@@ -19,22 +20,33 @@ function AnimatedBalance({ balance }: { balance: number }) {
   )
 }
 
-export function Header({ balance }: HeaderProps) {
+export function Header({ balance, onReset }: HeaderProps) {
   return (
     <header className="relative z-20 flex items-center justify-between gap-3 px-4 pb-2 pt-4 sm:px-6">
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-gold/70">
-          Demo Arena
+          Demo · Pari-mutuel
         </p>
         <h1 className="font-display text-2xl font-bold tracking-wide text-cream sm:text-3xl">
           HORSE<span className="text-gold"> RACE</span>
         </h1>
       </div>
-      <div className="rounded-2xl border border-gold/25 bg-surface/80 px-3 py-2 text-right shadow-[0_0_24px_rgba(212,160,23,0.08)] backdrop-blur-sm sm:px-4">
-        <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted">
-          Balance
-        </p>
-        <AnimatedBalance balance={balance} />
+      <div className="flex items-center gap-2">
+        {onReset && (
+          <button
+            type="button"
+            onClick={onReset}
+            className="hidden rounded-xl border border-white/10 px-2.5 py-2 text-[10px] uppercase tracking-[0.12em] text-muted hover:border-gold/40 hover:text-cream sm:block"
+          >
+            Reset
+          </button>
+        )}
+        <div className="rounded-2xl border border-gold/25 bg-surface/80 px-3 py-2 text-right shadow-[0_0_24px_rgba(212,160,23,0.08)] backdrop-blur-sm sm:px-4">
+          <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted">
+            Balance
+          </p>
+          <AnimatedBalance balance={balance} />
+        </div>
       </div>
     </header>
   )

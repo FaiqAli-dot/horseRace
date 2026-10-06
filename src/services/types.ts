@@ -1,4 +1,5 @@
 export type Market = 'WIN' | 'PLACE_2' | 'PLACE_3'
+
 export type RaceStatus =
   | 'SCHEDULED'
   | 'BETTING_OPEN'
@@ -85,3 +86,28 @@ export interface PlaceBetResponse {
   balanceCents: number
   balance: number
 }
+
+export interface BalanceResponse {
+  balance: number
+  balanceCents: number
+  playerId: string
+}
+
+export type RealtimeEventName =
+  | 'race.created'
+  | 'race.betting_open'
+  | 'pool.updated'
+  | 'bet.accepted'
+  | 'race.locked'
+  | 'race.started'
+  | 'race.result'
+  | 'bet.settled'
+  | 'race.finished'
+  | 'demo.reset'
+
+export interface RealtimeMessage<T = unknown> {
+  event: RealtimeEventName | string
+  payload: T
+}
+
+export type BetDisplayStatus = 'PENDING' | 'WON' | 'LOST' | 'REFUNDED'
