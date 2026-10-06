@@ -83,7 +83,7 @@ export function BetSelector({
             type="button"
             disabled={!canPlaceBet}
             onClick={onPlaceBet}
-            className="min-h-12 rounded-2xl bg-gradient-to-r from-gold-dim via-gold to-gold-light px-5 py-3 font-display text-base font-bold tracking-[0.08em] text-ink shadow-[0_10px_30px_rgba(212,160,23,0.28)] transition enabled:hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none sm:min-w-[12rem] sm:text-lg"
+            className="min-h-12 rounded-2xl bg-gradient-to-r from-gold-dim via-gold to-gold-light px-5 py-3 font-display text-base font-bold tracking-[0.08em] text-ink shadow-[0_10px_30px_rgba(212,160,23,0.28)] transition enabled:hover:brightness-110 disabled:cursor-not-allowed disabled:from-zinc-700 disabled:via-zinc-600 disabled:to-zinc-500 disabled:text-zinc-300 disabled:opacity-70 disabled:shadow-none sm:min-w-[12rem] sm:text-lg"
           >
             PLACE BET
             {Number.isFinite(activeQuick) && activeQuick > 0
