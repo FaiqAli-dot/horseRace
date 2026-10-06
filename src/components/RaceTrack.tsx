@@ -34,7 +34,7 @@ export function RaceTrack({
       </div>
 
       <div className="relative px-2 pb-3 pt-1 sm:px-3">
-        <div className="relative h-[280px] overflow-hidden rounded-2xl border border-white/5 bg-[#1a1510] sm:h-[320px] md:h-[360px]">
+        <div className="relative h-[240px] overflow-hidden rounded-2xl border border-white/5 bg-[#1a1510] sm:h-[280px] md:h-[320px]">
           {/* Dirt texture / lanes */}
           <div className="absolute inset-0 bg-[linear-gradient(180deg,#2a2218_0%,#1f1812_40%,#17120e_100%)]" />
           <div

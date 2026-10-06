@@ -18,7 +18,7 @@ export default function App() {
       <div className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col">
         <Header balance={race.balance} />
 
-        <main className="flex flex-1 flex-col gap-5 pb-6 pt-2">
+        <main className="flex flex-1 flex-col gap-4 pb-44 pt-2 sm:gap-5 sm:pb-40">
           <RaceTrack
             progress={race.raceProgress}
             selectedHorseId={race.selectedHorseId}
@@ -34,19 +34,19 @@ export default function App() {
             onSelect={race.selectHorse}
           />
 
-          <BetSelector
-            betAmount={race.betAmount}
-            customBet={race.customBet}
-            disabled={race.isInteractionLocked}
-            canPlaceBet={race.canPlaceBet}
-            onQuickSelect={race.setBetQuick}
-            onCustomChange={race.setCustomBet}
-            onPlaceBet={race.placeBet}
-          />
-
           <RaceHistory history={race.history} />
         </main>
       </div>
+
+      <BetSelector
+        betAmount={race.betAmount}
+        customBet={race.customBet}
+        disabled={race.isInteractionLocked}
+        canPlaceBet={race.canPlaceBet}
+        onQuickSelect={race.setBetQuick}
+        onCustomChange={race.setCustomBet}
+        onPlaceBet={race.placeBet}
+      />
 
       <PhotoFinish
         open={race.showPhotoFinishOverlay}

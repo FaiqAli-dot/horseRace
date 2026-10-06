@@ -34,7 +34,7 @@ export function HorseSelector({
               disabled={disabled}
               whileTap={disabled ? undefined : { scale: 0.97 }}
               onClick={() => onSelect(horse.id)}
-              className={`relative min-w-[148px] shrink-0 rounded-2xl border p-3 text-left transition-colors sm:min-w-0 ${
+              className={`relative min-w-[140px] shrink-0 rounded-2xl border p-2.5 text-left transition-colors sm:min-w-0 sm:p-3 ${
                 selected
                   ? 'border-gold bg-gold/15 shadow-[0_0_0_1px_rgba(212,160,23,0.45),0_8px_28px_rgba(212,160,23,0.18)]'
                   : 'border-white/8 bg-surface hover:border-white/20 hover:bg-surface-2'
