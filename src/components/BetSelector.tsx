@@ -27,8 +27,11 @@ export function BetSelector({
     customBet.trim() === '' ? betAmount : Number.parseFloat(customBet)
 
   return (
-    <section className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 sm:px-6">
-      <div className="pointer-events-auto mx-auto max-w-5xl rounded-3xl border border-gold/20 bg-surface/95 p-3 shadow-[0_-12px_40px_rgba(0,0,0,0.55)] backdrop-blur-md sm:p-4">
+    <section
+      id="bet-dock"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-gold/20 bg-surface/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_40px_rgba(0,0,0,0.55)] backdrop-blur-md sm:px-6"
+    >
+      <div className="mx-auto max-w-5xl">
         <div className="mb-2 flex items-center justify-between gap-2">
           <h2 className="font-display text-base font-semibold tracking-wide text-cream sm:text-lg">
             Bet Amount
@@ -79,6 +82,7 @@ export function BetSelector({
           </label>
 
           <button
+            id="place-bet-button"
             type="button"
             disabled={!canPlaceBet}
             onClick={onPlaceBet}
