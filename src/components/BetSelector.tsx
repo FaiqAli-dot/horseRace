@@ -27,21 +27,18 @@ export function BetSelector({
     customBet.trim() === '' ? betAmount : Number.parseFloat(customBet)
 
   return (
-    <section
-      id="bet-dock"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-gold/20 bg-surface/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_40px_rgba(0,0,0,0.55)] backdrop-blur-md sm:px-6"
-    >
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-2 flex items-center justify-between gap-2">
+    <section className="px-4 sm:px-6">
+      <div className="rounded-3xl border border-white/8 bg-surface/90 p-3 shadow-[0_12px_40px_rgba(0,0,0,0.35)] sm:p-4">
+        <div className="mb-2 flex items-center justify-between gap-2 sm:mb-3">
           <h2 className="font-display text-base font-semibold tracking-wide text-cream sm:text-lg">
             Bet Amount
           </h2>
-          <span className="rounded-full border border-gold/30 bg-gold/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-gold">
+          <span className="rounded-full border border-gold/30 bg-gold/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-gold sm:px-2.5 sm:py-1">
             Demo Mode · Virtual Balance
           </span>
         </div>
 
-        <div className="mb-2 flex gap-1.5 overflow-x-auto pb-0.5 sm:flex-wrap sm:overflow-visible">
+        <div className="mb-2 flex flex-wrap gap-1.5 sm:mb-3 sm:gap-2">
           {QUICK_BETS.map((amount) => {
             const active = customBet.trim() === '' && betAmount === amount
             return (
@@ -50,7 +47,7 @@ export function BetSelector({
                 type="button"
                 disabled={disabled}
                 onClick={() => onQuickSelect(amount)}
-                className={`min-h-10 min-w-[3.75rem] shrink-0 rounded-xl border px-2.5 py-2 text-sm font-semibold tabular-nums transition-colors sm:min-w-[4.5rem] sm:flex-1 ${
+                className={`min-h-10 min-w-[3.75rem] flex-1 rounded-xl border px-2.5 py-2 text-sm font-semibold tabular-nums transition-colors sm:min-h-11 sm:min-w-[4.5rem] ${
                   active
                     ? 'border-gold bg-gold text-ink'
                     : 'border-white/10 bg-surface-2 text-cream hover:border-gold/40'
@@ -62,7 +59,7 @@ export function BetSelector({
           })}
         </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+        <div className="flex flex-col gap-2 sm:flex-row">
           <label className="block min-w-0 flex-1">
             <span className="sr-only">Custom amount</span>
             <div className="relative">
@@ -86,7 +83,7 @@ export function BetSelector({
             type="button"
             disabled={!canPlaceBet}
             onClick={onPlaceBet}
-            className="min-h-12 shrink-0 rounded-2xl bg-gradient-to-r from-gold-dim via-gold to-gold-light px-5 py-3 font-display text-base font-bold tracking-[0.08em] text-ink shadow-[0_10px_30px_rgba(212,160,23,0.28)] transition enabled:hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none sm:min-w-[14rem] sm:text-lg"
+            className="min-h-12 rounded-2xl bg-gradient-to-r from-gold-dim via-gold to-gold-light px-5 py-3 font-display text-base font-bold tracking-[0.08em] text-ink shadow-[0_10px_30px_rgba(212,160,23,0.28)] transition enabled:hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none sm:min-w-[12rem] sm:text-lg"
           >
             PLACE BET
             {Number.isFinite(activeQuick) && activeQuick > 0
