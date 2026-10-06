@@ -57,6 +57,96 @@
   }
 }
 
+/* --- Gallop cycle (CSS-only, GPU-friendly transforms) --- */
+@keyframes horse-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1.5deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(1.5deg);
+  }
+}
+
+@keyframes horse-leg-a {
+  0%,
+  100% {
+    transform: rotate(-28deg);
+  }
+  50% {
+    transform: rotate(30deg);
+  }
+}
+
+@keyframes horse-leg-b {
+  0%,
+  100% {
+    transform: rotate(26deg);
+  }
+  50% {
+    transform: rotate(-30deg);
+  }
+}
+
+@keyframes horse-tail {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-12deg);
+  }
+}
+
+.horse-gallop .horse-rig {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: horse-bob 0.26s ease-in-out infinite;
+  will-change: transform;
+}
+
+.horse-gallop .leg-back-far,
+.horse-gallop .leg-front-near {
+  transform-box: fill-box;
+  transform-origin: top center;
+  animation: horse-leg-a 0.26s ease-in-out infinite;
+}
+
+.horse-gallop .leg-back-near,
+.horse-gallop .leg-front-far {
+  transform-box: fill-box;
+  transform-origin: top center;
+  animation: horse-leg-b 0.26s ease-in-out infinite;
+}
+
+.horse-gallop .horse-tail {
+  transform-box: fill-box;
+  transform-origin: right center;
+  animation: horse-tail 0.26s ease-in-out infinite;
+}
+
+/* --- Finish confetti --- */
+@keyframes confetti-fall {
+  0% {
+    transform: translate3d(0, -8%, 0) rotate(var(--spin, 0deg));
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(12px, 110%, 0) rotate(calc(var(--spin, 0deg) + 220deg));
+    opacity: 0;
+  }
+}
+
+.confetti-piece {
+  animation-name: confetti-fall;
+  animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -64,5 +154,15 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .horse-gallop .horse-rig,
+  .horse-gallop .leg-back-far,
+  .horse-gallop .leg-back-near,
+  .horse-gallop .leg-front-far,
+  .horse-gallop .leg-front-near,
+  .horse-gallop .horse-tail,
+  .confetti-piece {
+    animation: none !important;
   }
 }

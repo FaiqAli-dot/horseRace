@@ -11,8 +11,10 @@ import { useRace } from './hooks/useRace'
 
 export default function App() {
   const race = useRace()
-  const isRacing = race.gameState === 'racing'
+  const isRacing = race.gameState === 'racing' && !race.showFinishMoment
   const showResult = race.gameState === 'finished' && race.payout !== null
+  const confettiActive =
+    race.showFinishMoment && race.gameState !== 'finished' && !race.showPhotoFinishOverlay
   const trackRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -33,6 +35,10 @@ export default function App() {
               selectedHorseId={race.selectedHorseId}
               isRacing={isRacing}
               countdownLabel={race.countdownLabel}
+              result={race.result}
+              showFinishMoment={race.showFinishMoment}
+              confettiActive={confettiActive}
+              finishIntensity={race.finishIntensity}
             />
           </div>
 

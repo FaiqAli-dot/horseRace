@@ -49,15 +49,16 @@ export function RaceResult({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.35 }}
         >
           <motion.div
             role="dialog"
             aria-modal="true"
             aria-labelledby="race-result-title"
-            initial={{ y: 40, opacity: 0, scale: 0.96 }}
+            initial={{ y: 56, opacity: 0, scale: 0.92 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 24, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 280, damping: 24 }}
+            transition={{ type: 'spring', stiffness: 220, damping: 22, delay: 0.08 }}
             className={`relative w-full max-w-md overflow-hidden rounded-3xl border p-5 shadow-2xl sm:p-6 ${
               win
                 ? isFirst
